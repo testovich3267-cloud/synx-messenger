@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Neon Messenger — Web Client</title>
+<style>
+  body {
+    background: #0d0d0d;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  #messages {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #111;
+  }
+  input, button {
+    padding: 10px;
+    font-size: 16px;
+  }
+  input {
+    width: 70%;
+    background: #222;
+    border: 1px solid #444;
+    color: #fff;
+  }
+  button {
+    background: cyan;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h2>Neon Messenger — Web Client</h2>
+
+<label>Токен:</label><br>
+<input id="token" placeholder="Вставь токен из /login"><br><br>
+
+<label>ID чата:</label><br>
+<input id="chat" value="1"><br><br>
+
+<button onclick="connectWS()">Подключиться</button>
+
+<h3>Сообщения:</h3>
+<div id="messages"></div>
+
+<input id="text" placeholder="Написать сообщение...">
+<button onclick="sendMsg()">Отправить</button>
+
+<script>
+let ws;
+
+function connectWS() {
+    const token = document.getElementById("token").value;
+    const chat = document.getElementById("chat").value;
+
+    ws = new WebSocket(`ws://localhost:8000/ws/chat/${chat}?token=${token}`);
+
+    ws.onopen = () => {
+        document.getElementById("messages").innerHTML += "<div><i>Подключено</i></div>";
+    };
+
+    ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        const box = document.getElementById("messages");
+        box.innerHTML += `<div><b>${msg.username}:</b> ${msg.text}</div>`;
+        box.scrollTop = box.scrollHeight;
+    };
+
+    ws.onclose = () => {
+        document.getElementById("messages").innerHTML += "<div><i>Отключено</i></div>";
+    };
+}
+
+function sendMsg() {
+    const text = document.getElementById("text").value;
+    if (ws && text.trim() !== "") {
+        ws.send(JSON.stringify({ text }));
+        document.getElementById("text").value = "";
+    }
+}
+</script>
+
+</body>
+</html>

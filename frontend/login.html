@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Synx — Вход</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">Synx</div>
+
+        <h2>Вход</h2>
+
+        <input id="loginUsername" class="auth-input" type="text" placeholder="Логин">
+        <input id="loginPassword" class="auth-input" type="password" placeholder="Пароль">
+
+        <button class="auth-btn" id="loginBtn">Войти</button>
+
+        <p class="auth-switch">
+            Нет аккаунта? <a href="register.html">Создать</a>
+        </p>
+
+        <div id="authError" class="auth-error"></div>
+    </div>
+</div>
+
+<script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synx Messenger</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="/static/image/svg+xml" href="/static/favicon.svg">
+</head>
+<body>
+<script>
+if (!localStorage.getItem("token")) {
+    window.location.href = "/static/login.html";
+}
+</script>
+
+<div class="app-shell">
+    <div class="app-inner">
+
+        <!-- Левая колонка — список чатов -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-glow"></div>
+                    <div class="logo-icon">S</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Synx</span>
+                        <span class="logo-subtitle">Neon Messenger</span>
+                    </div>
+                </div>
+                <div class="sidebar-status-pill">
+                    <span class="status-dot"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section-title">Чаты</div>
+
+            <div class="sidebar-search-wrap">
+                <input class="search-input" id="userSearch" placeholder="Поиск пользователей или чатов...">
+            </div>
+
+            <div class="sidebar-scroll">
+                <div class="chat-list" id="chatList"></div>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+
+            <button class="create-chat-btn" id="mobileCreateChatBtn">+ Новый чат</button>
+
+
+            <div class="sidebar-footer-nav">
+                <button class="nav-btn active">
+                    <span>Чаты</span>
+                </button>
+                <button class="nav-btn">
+                    <span>Контакты</span>
+                </button>
+            </div>
+        </aside>
+<div class="mobile-sidebar-wrapper" id="mobileSidebarWrapper">
+    <div class="mobile-sidebar-overlay" id="mobileSidebarOverlay"></div>
+
+    <div class="mobile-sidebar" id="mobileSidebar">
+
+    <!-- Профиль сверху -->
+    <div class="mobile-profile-block">
+        <div class="mobile-profile-avatar" id="mobileProfileAvatar"></div>
+
+        <div class="mobile-profile-info">
+            <div class="mobile-profile-name" id="mobileProfileName">User</div>
+            <div class="mobile-profile-status" id="mobileProfileStatus">Online</div>
+        </div>
+
+        <button class="mobile-profile-edit-btn" onclick="openProfileSettings()">⚙</button>
+    </div>
+
+
+    <div class="mobile-divider"></div>
+
+    <!-- Чаты -->
+    <div class="sidebar-section-title">Чаты</div>
+
+    <div class="sidebar-search-wrap">
+        <input class="search-input" id="userSearchMobile" placeholder="Поиск...">
+    </div>
+
+    <div class="sidebar-scroll" id="chatListMobile"></div>
+
+    <button class="create-chat-btn" onclick="createChat()">+ Новый чат</button>
+
+    <div class="mobile-divider"></div>
+
+    <!-- Невидимый режим -->
+    <div class="mobile-menu-item" onclick="toggleStealthMode()">
+        <span>Невидимый режим</span>
+            <div class="toggle" id="mobileStealthToggle">
+                <div class="toggle-knob"></div>
+            </div>
+    </div>
+
+    <!-- Выход -->
+    <div class="mobile-menu-item danger" onclick="logout()">
+        Выйти
+    </div>
+
+</div>
+
+</div>
+
+        <!-- Центр — чат -->
+<main class="chat-panel">
+
+    <!-- Хедер чата -->
+    <header class="chat-header">
+        <div class="chat-header-left">
+            <button class="sidebar-toggle-btn" id="openSidebarBtn">☰</button>
+
+            <div class="avatar avatar-chat" id="chatAvatar">?</div>
+
+            <div class="chat-header-info">
+                <div class="chat-header-name" id="chatTitle">Выберите чат</div>
+                <div id="chatStatus" class="chat-status"></div>
+                <div id="typingIndicator" class="typing-indicator"></div>
+            </div>
+        </div>
+
+        <div class="chat-header-right">
+
+            <div class="chat-search-panel">
+                <input id="chatSearchInput" class="chat-search-input" placeholder="Поиск..." style="display:none;">
+                <div id="searchNav" class="search-nav" style="display:none;">
+                    <button id="searchPrev" class="icon-btn small-btn">⬆</button>
+                    <span id="searchCounter" class="search-counter"></span>
+                    <button id="searchNext" class="icon-btn small-btn">⬇</button>
+                </div>
+            </div>
+
+            <button class="icon-btn" id="chatSearchBtn" title="Поиск по чату">🔍</button>
+            <button class="icon-btn" id="pinChatBtn" title="Закрепить чат">📌</button>
+            <button class="icon-btn" id="chatMenuBtn" title="Дополнительно">⋮</button>
+
+            <div class="chat-menu" id="chatMenu" style="display:none;">
+                <div class="chat-menu-item" id="chatInfoBtn">Информация о чате</div>
+                <div class="chat-menu-item" id="chatMembersBtn">Участники</div>
+                <div class="chat-menu-item" id="chatAddMemberBtn">Добавить участника</div>
+                <div class="chat-menu-item danger" id="chatLeaveBtn">Покинуть чат</div>
+                <div class="chat-menu-item danger" id="chatDeleteBtn">Удалить чат</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ОБЁРТКА ДЛЯ ЧАТА И ВСЕХ ПАНЕЛЕЙ -->
+    <div id="chatBodyWrapper">
+
+        <!-- СООБЩЕНИЯ -->
+        <section class="chat-body" id="chatBody"></section>
+
+        <!-- REPLY PREVIEW -->
+        <div id="replyPreview" class="reply-preview" style="display:none;">
+            <span id="replyText"></span>
+            <button id="cancelReply" class="cancel-reply">×</button>
+        </div>
+
+        <!-- FORWARD PREVIEW -->
+        <div id="forwardPreview" class="reply-preview" style="display:none;">
+            <div class="title">Переслать сообщение</div>
+            <div class="content"></div>
+            <button class="close" onclick="hideForwardPreview()">✕</button>
+        </div>
+
+        <div id="multiSelectPanel" style="display:none;">
+    <div class="left">
+        <span class="count" id="selectedCount">0</span> выбрано
+    </div>
+
+    <div class="right">
+        <button class="delete">Удалить</button>
+        <button class="forward">Переслать</button>
+        <button class="cancel">Отмена</button>
+    </div>
+</div>
+
+
+    </div>
+
+    <!-- FOOTER — ТОЛЬКО ВВОД -->
+    <footer class="chat-input-wrap">
+        <div class="chat-input-inner">
+
+            <button class="icon-btn attach-btn" id="attachBtn" title="Прикрепить файл">📎</button>
+            <input type="file" id="fileInput" style="display:none">
+
+            <input id="messageInput" type="text" class="chat-input-field" placeholder="Написать сообщение...">
+
+            <button class="icon-btn emoji-btn" id="emojiBtn" title="Эмодзи">😊</button>
+
+            <button class="send-button" id="sendBtn">➤</button>
+
+            <div id="emojiPanel" class="emoji-panel" style="display:none;"></div>
+        </div>
+    </footer>
+
+</main>
+
+
+        <!-- Правая колонка — профиль -->
+        <aside class="profile-panel">
+            <div class="profile-header">Профиль</div>
+
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <div class="profile-avatar-glow"></div>
+                    <div class="profile-avatar-inner" id="profileAvatar">U</div>
+                </div>
+
+                <div class="profile-name" id="profileName">User</div>
+                <div class="profile-status">
+                    <div class="profile-status-dot"></div>
+                    <span>Синхронизирован</span>
+                </div>
+
+                <div class="profile-badges">
+                    <span class="badge badge-cyan">Neon Mode</span>
+                    <span class="badge badge-purple">Beta</span>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="profile-btn" onclick="openProfileSettings()">
+                        <span>Настройки профиля</span>
+                        <span>⚙️</span>
+                    </button>
+
+                    <button class="profile-btn" onclick="toggleStealthMode()">
+                        <span>Режим невидимки</span>
+                        <div class="toggle">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="profile-extra">
+                <div class="profile-section-title">Сеанс</div>
+                <div class="session-card">
+                    <div class="session-row">
+                        <span class="session-label">Устройство</span>
+                        <span class="session-value">Desktop</span>
+                    </div>
+                    <div class="session-row">
+                        <span class="session-label">Локация</span>
+                        <span class="session-value">Secure</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="logout-btn" onclick="logout()">Выйти</button>
+        </aside>
+
+    </div>
+</div>
+
+<div id="imageModal">
+    <span class="close">&times;</span>
+    <img id="imageModalImg">
+</div>
+
+<div id="contextMenu" class="context-menu">
+    <div data-action="reply">Ответить</div>
+    <div data-action="forward">Переслать</div>
+    <div data-action="edit">Редактировать</div>
+    <div data-action="copy">Копировать</div>
+    <div data-action="delete">Удалить</div>
+</div>
+
+
+<!-- Панель для выделения -->
+<div id="selectionBar" class="selection-bar" style="display:none;">
+    <button onclick="deleteSelectedMessages()">Удалить</button>
+    <button onclick="forwardSelectedMessages()">Переслать</button>
+</div>
+
+<!-- Модалка настроек профиля -->
+<div id="profileSettingsModal">
+    <div class="modal-content">
+
+        <h2>Настройки профиля</h2>
+
+        <label>Имя пользователя</label>
+        <input id="profileUsername" type="text" class="profile-input">
+
+        <label>Статус</label>
+        <div class="synx-select" id="statusSelect">
+            <div class="synx-select-selected" data-value="online">Онлайн</div>
+            <div class="synx-select-options">
+                <div data-value="online">Онлайн</div>
+                <div data-value="offline">Оффлайн</div>
+                <div data-value="invisible">Невидимка</div>
+            </div>
+        </div>
+
+
+        <label>Аватар</label>
+
+            <img id="profileAvatarImg" class="profile-avatar-preview" src="">
+
+            <!-- Скрытый input -->
+            <input type="file" id="avatarInput" style="display:none" onchange="uploadAvatar(this.files[0])">
+
+            <!-- Красивая кнопка -->
+            <button class="upload-btn" onclick="document.getElementById('avatarInput').click()">
+                Загрузить аватар
+            </button>
+
+
+        <div class="modal-actions">
+            <button class="modal-btn" onclick="saveProfile()">Сохранить</button>
+            <button class="modal-btn" onclick="closeProfileSettings()">Закрыть</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- CREATE GROUP MODAL -->
+<div class="modal" id="createGroupModal" style="display:none;">
+    <div class="modal-content group-modal">
+
+        <h2>Создание группы</h2>
+
+        <input id="groupNameInput" class="group-input" placeholder="Название группы">
+
+        <div class="group-users-title">Выберите участников:</div>
+
+        <div class="group-users-list" id="groupUsersList"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" id="cancelGroupBtn">Отмена</button>
+            <button class="modal-btn create" id="createGroupBtn">Создать</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ADD MEMBER MODAL -->
+<div class="modal" id="addMemberModal" style="display:none;">
+    <div class="modal-content add-member-modal">
+
+        <h2>Добавить участника</h2>
+
+        <input id="addMemberSearch" class="group-input" placeholder="Поиск пользователей...">
+
+        <div class="group-users-list" id="addMemberResults"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" id="cancelAddMemberBtn">Отмена</button>
+            <button class="modal-btn create" id="confirmAddMemberBtn">Добавить</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- CHAT MEMBERS MODAL -->
+<div class="modal" id="chatMembersModal" style="display:none;">
+    <div class="modal-content members-modal">
+
+        <h2>Участники чата</h2>
+
+        <div id="chatMembersList" class="members-list"></div>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeMembersModal()">Закрыть</button>
+        </div>
+
+    </div>
+</div>
+
+<div id="forwardChatModal" class="modal">
+    <div class="modal-content">
+        <h3>Выберите чат</h3>
+        <div id="forwardChatList"></div>
+    </div>
+</div>
+
+<div id="chatPickerModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Выберите чат</h3>
+        <div id="chatPickerList"></div>
+    </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
