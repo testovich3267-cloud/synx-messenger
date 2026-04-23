@@ -2,7 +2,9 @@ fastapi
 uvicorn[standard]
 jinja2
 python-multipart
+
 sqlalchemy
 pydantic
-python-jose
 
+python-jose[cryptography]
+passlib[bcrypt]
